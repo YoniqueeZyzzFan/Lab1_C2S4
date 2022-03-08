@@ -69,7 +69,7 @@ private:
 		q->left = p;
 		FixHeight(p);
 		FixHeight(q);
-		return p;
+		return q;
 	}
 	node* removemin(node* p) {
 		if (p->left == 0) {
