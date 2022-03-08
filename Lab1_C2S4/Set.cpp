@@ -1,16 +1,19 @@
 #include <iostream>
-class MyIterator;
+#include <string>
 
+class MyIterator;
+template <typename T>
 class AvlTree {
 private:
+	template <typename T>
 	struct node {
 		node* right;
 		node* left;
-		int data;
+		T data;
 		int height;
-		node(int value = 0) { height = 0; data = value; right = nullptr; left = nullptr; }
+		node(T value = 0 ) { height = 0; data = value; right = nullptr; left = nullptr;}
 	};
-	bool findr(node* p, int value) const {
+	bool findr(node<T>* p, T value) const {
 		while (p != nullptr) {
 			if (p->data < value) {
 				p = p->right;
@@ -22,11 +25,11 @@ private:
 		}
 		return false;
 	}
-	node* findmin(node* p) {
+	node<T>* findmin(node<T>* p) {
 		if (p->left != nullptr) { return findmin(p->left); }
 		else return p;
 	}
-	node* balance(node* p) {
+	node<T>* balance(node<T>* p) {
 		FixHeight(p);
 		int dh = BalanceFactor(p);
 		if (dh == 2) {
@@ -44,61 +47,60 @@ private:
 		}
 		return p;
 	}
-	int height(node* p) {
+	int height(node<T>* p) {
 		return p ? p->height : 0;
 	}
-	int BalanceFactor(node* p) {
+	int BalanceFactor(node<T>* p) {
 		return height(p->left) - height(p->right);
 	}
-	void FixHeight(node* p) {
+	void FixHeight(node<T>* p) {
 		int rl = p->left ? p->left->height : 0;
 		int rh = p->right ? p->right->height : 0;
 		p->height = (rl > rh ? rl : rh) + 1;
 	}
-	node* TurnRight(node* p) {
-		node* q = p->left;
+	node<T>* TurnRight(node<T>* p) {
+		node<T>* q = p->left;
 		p->left = q->right;
 		q->right = p;
 		FixHeight(p);
 		FixHeight(q);
 		return q;
 	}
-	node* TurnLeft(node* p) {
-		node* q = p->right;
+	node<T>* TurnLeft(node<T>* p) {
+		node<T>* q = p->right;
 		p->right = q->left;
 		q->left = p;
 		FixHeight(p);
 		FixHeight(q);
 		return q;
 	}
-	node* removemin(node* p) {
+	node<T>* removemin(node<T>* p) {
 		if (p->left == 0) {
 			return p->right;
 		}
 		p->left = removemin(p->left);
 		return balance(p);
 	}
-	node* remove(node* p, int value) {
+	node<T>* remove(node<T>* p, T value) {
 		if (!p) return nullptr;
 		if (value < p->data) p->left = remove(p->left, value);
 		else if (value > p->data)  p->right = remove(p->right, value);
 		else {
-			node* q = p->left;
-			node* r = p->right;
+			node<T>* q = p->left;
+			node<T>* r = p->right;
 			delete p;
 			if (!r) return q;
-			node* min = findmin(r);
+			node<T>* min = findmin(r);
 			min->right = removemin(r);
 			min->left = q;
 			return balance(min);
 		}
 		return balance(p);
 	}
-	node* insert(node* root, int value) {
+	node<T>* insert(node<T>* root, T value) {
 		if (!root) {
-			root = new node;
+			root = new node<T>(value);
 			root->height = 0;
-			root->data = value;
 			root->left = nullptr;
 			root->right = nullptr;
 		}
@@ -110,7 +112,22 @@ private:
 		}
 		return balance(root);
 	}
-	void print_Tree(node* p, int level = 0) const
+	node<std::string>* insert(node<std::string>* root, std::string value) {
+		if (!root) {
+			root = new node<std::string>(value);
+			root->height = 0;
+			root->left = nullptr;
+			root->right = nullptr;
+		}
+		else if (value.length() < root->data.length()) {
+			root->left = insert(root->left, value);
+		}
+		else {
+			root->right = insert(root->right, value);
+		}
+		return balance(root);
+	}
+	void print_Tree(node<T>* p, int level = 0) const
 	{
 		if (p)
 		{
@@ -120,12 +137,12 @@ private:
 			print_Tree(p->left, level + 1);
 		}
 	}
-	void clear(node* p) {
+	void clear(node<T>* p) {
 		while (p != nullptr) {
 			p = remove(p, p->data);
 		}
 	}
-	node* copy(node* p) {
+	node<T>* copy(node<T>* p) {
 		if (p) {
 			node* nr = new node;
 			nr->data = p->data;
@@ -136,12 +153,12 @@ private:
 		}
 		return p;
 	}
-	node* root;
+	node<T>* root;
 public:
 	AvlTree() {
 		root = nullptr;
 	}
-	void insert(int value) {
+	void insert(T value) {
 		if (findr(root, value) != true) {
 			root = insert(root, value);
 		}
@@ -153,10 +170,10 @@ public:
 		}
 		print_Tree(root);
 	}
-	bool find(int key) const {
+	bool find(T key) const {
 		return findr(root, key);
 	}
-	void erase(int key) {
+	void erase(T key) {
 		root = remove(root, key);
 	}
 	~AvlTree() {
@@ -172,9 +189,9 @@ public:
 		root = copy(rhs.root);
 	}
 	class MyIterator {
-		AvlTree* tree;
-		AvlTree::node* root;
-		AvlTree::node* head;
+		AvlTree<T>	* tree;
+		AvlTree::node<T>* root;
+		AvlTree::node<T>* head;
 	public:
 		MyIterator() = delete;
 		MyIterator(AvlTree* rhs) : tree(rhs) {
@@ -190,7 +207,7 @@ public:
 		MyIterator& operator++() {
 
 		}
-		int& operator*() {
+		T& operator*() {
 			return head->data;
 		}
 	};
@@ -198,6 +215,3 @@ public:
 		return MyIterator(this);
 	}
 };
-
-
-

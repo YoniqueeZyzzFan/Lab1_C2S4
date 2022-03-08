@@ -1,12 +1,30 @@
 #include <iostream>
 #include <time.h>
+#include <string>
 #include "Set.cpp"
 
 int main()
 {
-    
+    //Test int
+    //AvlTree<int> at;
+    //at.insert(123);
+    //at.insert(100);
+    //at.insert(300);
+    //at.treeprint();
+
+
+    // Test string
+
+   /* AvlTree<std::string> at;
+    at.insert("Privet");
+    at.insert("PrivetPrivet");
+    at.insert("Hi");
+    at.treeprint();*/
+
+    // Test time
+
    /* setlocale(LC_ALL, "");
-    AvlTree at;
+    AvlTree<int> at;
     clock_t start, end;
     for (int i = 0; i < 100000; ++i) {
         start = clock();
