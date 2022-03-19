@@ -7,12 +7,15 @@ class AvlTree {
 private:
 	template <typename T>
 	struct node {
+		node* next;
+		node* prev;
 		node* right;
 		node* left;
 		T data;
 		int height;
-		node(T value = 0 ) { height = 0; data = value; right = nullptr; left = nullptr;}
+		node(T value = 0) { height = 0; data = value; right = nullptr; left = nullptr; next = nullptr; prev = nullptr; }
 	};
+
 	bool findr(node<T>* p, T value) const {
 		while (p != nullptr) {
 			if (p->data < value) {
@@ -97,33 +100,59 @@ private:
 		}
 		return balance(p);
 	}
-	node<T>* insert(node<T>* root, T value) {
+	node<T>* insert(node<T>* root, node<T>* parent, T value) {
 		if (!root) {
 			root = new node<T>(value);
-			root->height = 0;
-			root->left = nullptr;
-			root->right = nullptr;
+			if (_tail == nullptr) _tail = root;
+			if (_begin == nullptr) _begin = root;
+			if (parent!=nullptr && parent->data > root->data) {
+				node<T>* tmp = parent->prev;
+				parent->prev = root;
+				root->next = parent;
+				root->prev = tmp;
+				if (tmp != nullptr) tmp->next = root;
+				if(_begin->data > value) _begin = root;
+			}
+			if (parent!=nullptr && parent->data < root->data) {
+				node<T>* tmp = parent->next;
+				parent->next = root;
+				root->prev = parent;
+				root->next = tmp;
+				if (tmp != nullptr) tmp->prev = root;
+				if(_tail->data < value) _tail = root;
+			}
 		}
 		else if (value < root->data) {
-			root->left = insert(root->left, value);
+			root->left = insert(root->left,root, value);
 		}
 		else {
-			root->right = insert(root->right, value);
+			root->right = insert(root->right,root, value);
 		}
 		return balance(root);
 	}
-	node<std::string>* insert(node<std::string>* root, std::string value) {
+	node<std::string>* insert(node<std::string>* root, node<std::string>* parent, std::string value) {
 		if (!root) {
 			root = new node<std::string>(value);
-			root->height = 0;
-			root->left = nullptr;
-			root->right = nullptr;
+			if (parent!=nullptr && parent->data.length() > root->data.length()) {
+				node<std::string>* tmp = parent->prev;
+				parent->prev = root;
+				root->next = parent;
+				root->prev = tmp;
+				if (tmp != nullptr) tmp->next = root;
+			}
+			if(parent!=nullptr && parent->data.length() < root->data.length()){
+				node<std::string>* tmp = parent->next;
+				parent->next = root;
+				root->prev = parent;
+				root->next = tmp;
+				if (tmp != nullptr) tmp->prev = root;
+			}
 		}
 		else if (value.length() < root->data.length()) {
-			root->left = insert(root->left, value);
+			root->left = insert(root->left, root, value);
 		}
 		else {
-			root->right = insert(root->right, value);
+			root->right = insert(root->right, root, value);
 		}
 		return balance(root);
 	}
@@ -153,14 +182,19 @@ private:
 		}
 		return p;
 	}
+
 	node<T>* root;
+	node<T>* _begin;
+	node<T>* _tail;
 public:
 	AvlTree() {
 		root = nullptr;
+		_begin = nullptr;
+		_tail = nullptr;
 	}
 	void insert(T value) {
 		if (findr(root, value) != true) {
-			root = insert(root, value);
+			root = insert(root,root, value);
 		}
 	}
 	void treeprint() const {
@@ -188,30 +222,72 @@ public:
 		clear(root);
 		root = copy(rhs.root);
 	}
+
 	class MyIterator {
-		AvlTree<T>	* tree;
+		AvlTree<T>* owner;
 		AvlTree::node<T>* root;
-		AvlTree::node<T>* head;
 	public:
 		MyIterator() = delete;
-		MyIterator(AvlTree* rhs) : tree(rhs) {
-			root = rhs->root;
-			head = rhs->root;
-			while (root != nullptr && head->left != nullptr) {
-				head = head->left;
-				while (root->left != head) {
-					root = root->left;
-				}
-			}
+		MyIterator(AvlTree::node<T>* rhs, AvlTree<T>* own) :root(rhs), owner(own) {}
+		MyIterator operator++() {
+			if (root == nullptr) return *this;
+			root = root->next;
+			return *this;
 		}
-		MyIterator& operator++() {
-
+		MyIterator operator--() {
+			if (root == nullptr) return *this;
+			root = root->prev;
+			return *this;
+		}
+		bool operator == (const MyIterator & rhs){
+			return root == rhs.root;
+		}
+		bool operator !=(const MyIterator& rhs) {
+			return !(root==rhs.root);
 		}
 		T& operator*() {
-			return head->data;
+			if (root != nullptr) return root->data;
+			else throw "Nullptr";
 		}
 	};
 	MyIterator begin() {
-		return MyIterator(this);
+		return MyIterator(this->_begin, this);
+	}
+	MyIterator end() {
+		return MyIterator(this->_tail->next, this);
+	}
+
+	class rMyIterator {
+		AvlTree<T>* owner;
+		AvlTree::node<T>* root;
+	public:
+		rMyIterator() = delete;
+		rMyIterator(AvlTree::node<T>* rhs, AvlTree<T>* own) :root(rhs), owner(own) {}
+		rMyIterator operator++() {
+			if (root == nullptr) return *this;
+			root = root->prev;
+			return *this;
+		}
+		rMyIterator operator--() {
+			if (root == nullptr) return *this;
+			root = root->next;
+			return *this;
+		}
+		bool operator == (const rMyIterator& rhs) {
+			return root == rhs.root;
+		}
+		bool operator !=(const rMyIterator& rhs) {
+			return !(root==rhs.root);
+		}
+		T& operator*() {
+			if (root != nullptr) return root->data;
+			else throw "Nullptr";
+		}
+	};
+	rMyIterator rbegin() {
+		return rMyIterator(this->_tail, this);
+	}
+	rMyIterator rend() {
+		return rMyIterator(this->_begin->prev, this);
 	}
 };

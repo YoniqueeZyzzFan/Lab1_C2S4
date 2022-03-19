@@ -6,11 +6,18 @@
 int main()
 {
     //Test int
-    //AvlTree<int> at;
-    //at.insert(123);
-    //at.insert(100);
-    //at.insert(300);
-    //at.treeprint();
+    AvlTree<int> at;
+    at.insert(123);
+    at.insert(100);
+    at.insert(300);
+    at.insert(13235);
+    at.insert(400);
+    at.treeprint();
+    auto it = at.rbegin();
+    while(it!=at.rend()){
+        std::cout << *it << std::endl;
+    ++it;
+    }
 
 
     // Test string
