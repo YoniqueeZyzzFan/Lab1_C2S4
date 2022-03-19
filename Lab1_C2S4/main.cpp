@@ -18,7 +18,7 @@ int main()
         std::cout << *it << std::endl;
     ++it;
     }
-
+    //nothing
 
     // Test string
 
