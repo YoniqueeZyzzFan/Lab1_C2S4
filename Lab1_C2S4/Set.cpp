@@ -1,8 +1,7 @@
 #include <iostream>
-#include <string>
 
 class MyIterator;
-template <typename T>
+template <typename T, typename TComparator = std::less<T>>
 class AvlTree {
 private:
 	template <typename T>
@@ -17,11 +16,12 @@ private:
 	};
 
 	bool findr(node<T>* p, T value) const {
+		TComparator less;
 		while (p != nullptr) {
-			if (p->data < value) {
+			if (less(p->data, value)) {
 				p = p->right;
 			}
-			else if (p->data > value) {
+			else if (less(value, p->data)) {
 				p = p->left;
 			}
 			else return true;
@@ -36,13 +36,13 @@ private:
 		FixHeight(p);
 		int dh = BalanceFactor(p);
 		if (dh == 2) {
-			if (height(p->left->right) > height(p->left->left)) {
+			if (height(p->left->left) < height(p->left->right)) {
 				p->left = TurnLeft(p->left);
 			}
 			p = TurnRight(p);
 		}
 		else if (dh == -2) {
-			if (height(p->right->left) > height(p->right->right)) {
+			if (height(p->right->right) < height(p->right->left)) {
 				p->right = TurnRight(p->right);
 			}
 			p = TurnLeft(p);
@@ -86,8 +86,9 @@ private:
 	}
 	node<T>* remove(node<T>* p, T value) {
 		if (!p) return nullptr;
-		if (value < p->data) p->left = remove(p->left, value);
-		else if (value > p->data)  p->right = remove(p->right, value);
+		TComparator less;
+		if (less(value, p->data)) p->left = remove(p->left, value);
+		else if (less(p->data, value))  p->right = remove(p->right, value);
 		else {
 			node<T>* q = p->left;
 			node<T>* r = p->right;
@@ -101,54 +102,29 @@ private:
 		return balance(p);
 	}
 	node<T>* insert(node<T>* root, node<T>* parent, T value) {
+		TComparator less;
 		if (!root) {
 			root = new node<T>(value);
 			if (_tail == nullptr) _tail = root;
 			if (_begin == nullptr) _begin = root;
-			if (parent!=nullptr && parent->data > root->data) {
+			if (parent != nullptr && less(root->data, parent->data)) {
 				node<T>* tmp = parent->prev;
 				parent->prev = root;
 				root->next = parent;
 				root->prev = tmp;
 				if (tmp != nullptr) tmp->next = root;
-				if(_begin->data > value) _begin = root;
+				if (less(value, _begin->data)) _begin = root;
 			}
-			if (parent!=nullptr && parent->data < root->data) {
+			if (parent != nullptr && less(parent->data, root->data)) {
 				node<T>* tmp = parent->next;
 				parent->next = root;
 				root->prev = parent;
 				root->next = tmp;
 				if (tmp != nullptr) tmp->prev = root;
-				if(_tail->data < value) _tail = root;
+				if (less(_tail->data, value)) _tail = root;
 			}
 		}
-		else if (value < root->data) {
-			root->left = insert(root->left,root, value);
-		}
-		else {
-			root->right = insert(root->right,root, value);
-		}
-		return balance(root);
-	}
-	node<std::string>* insert(node<std::string>* root, node<std::string>* parent, std::string value) {
-		if (!root) {
-			root = new node<std::string>(value);
-			if (parent!=nullptr && parent->data.length() > root->data.length()) {
-				node<std::string>* tmp = parent->prev;
-				parent->prev = root;
-				root->next = parent;
-				root->prev = tmp;
-				if (tmp != nullptr) tmp->next = root;
-			}
-			if(parent!=nullptr && parent->data.length() < root->data.length()){
-				node<std::string>* tmp = parent->next;
-				parent->next = root;
-				root->prev = parent;
-				root->next = tmp;
-				if (tmp != nullptr) tmp->prev = root;
-			}
-		}
-		else if (value.length() < root->data.length()) {
+		else if (less(value, root->data)) {
 			root->left = insert(root->left, root, value);
 		}
 		else {
@@ -194,7 +170,7 @@ public:
 	}
 	void insert(T value) {
 		if (findr(root, value) != true) {
-			root = insert(root,root, value);
+			root = insert(root, root, value);
 		}
 	}
 	void treeprint() const {
@@ -239,11 +215,11 @@ public:
 			root = root->prev;
 			return *this;
 		}
-		bool operator == (const MyIterator & rhs){
+		bool operator == (const MyIterator& rhs) {
 			return root == rhs.root;
 		}
 		bool operator !=(const MyIterator& rhs) {
-			return !(root==rhs.root);
+			return !(root == rhs.root);
 		}
 		T& operator*() {
 			if (root != nullptr) return root->data;
@@ -277,7 +253,7 @@ public:
 			return root == rhs.root;
 		}
 		bool operator !=(const rMyIterator& rhs) {
-			return !(root==rhs.root);
+			return !(root == rhs.root);
 		}
 		T& operator*() {
 			if (root != nullptr) return root->data;
